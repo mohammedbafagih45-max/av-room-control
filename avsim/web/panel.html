@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Room Touch Panel</title>
+<style>
+  :root {
+    --bg: #0e1116;
+    --panel: #171b22;
+    --raised: #1f252e;
+    --line: #2a313c;
+    --text: #e8ecf1;
+    --muted: #8a94a3;
+    --accent: #3fa7ff;
+    --on: #36c37a;
+    --warn: #f0b23e;
+    --off: #e5534b;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-user-select: none; user-select: none;
+  }
+  .frame {
+    max-width: 1100px; margin: 24px auto; padding: 0 16px;
+  }
+  .bezel {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 22px;
+    padding: 20px; box-shadow: 0 20px 60px rgba(0,0,0,.45);
+  }
+  header {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding-bottom: 16px; border-bottom: 1px solid var(--line); margin-bottom: 18px;
+  }
+  h1 { font-size: 20px; margin: 0; font-weight: 600; letter-spacing: .2px; cursor: default; }
+  .sub { color: var(--muted); font-size: 13px; }
+  .leds { display: flex; gap: 14px; flex-wrap: wrap; }
+  .led { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+  .led i { width: 9px; height: 9px; border-radius: 50%; background: var(--off); box-shadow: 0 0 6px var(--off); }
+  .led.up i { background: var(--on); box-shadow: 0 0 6px var(--on); }
+
+  .grid { display: grid; grid-template-columns: 1fr 190px; gap: 18px; }
+  @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+
+  .label { font-size: 12px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--muted); margin: 0 0 10px; }
+  .sources { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  button {
+    font: inherit; color: var(--text); background: var(--raised); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 16px; cursor: pointer; transition: transform .06s, background .15s, border-color .15s;
+  }
+  button:active { transform: scale(.97); }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  .src { text-align: left; min-height: 92px; display: flex; flex-direction: column; justify-content: space-between; }
+  .src b { font-size: 16px; font-weight: 600; }
+  .src span { font-size: 12px; color: var(--muted); }
+  .src.active { border-color: var(--accent); background: linear-gradient(180deg, rgba(63,167,255,.18), rgba(63,167,255,.05)); }
+  .src.active span { color: var(--accent); }
+
+  .audio { display: flex; flex-direction: column; gap: 10px; }
+  .meter {
+    position: relative; height: 210px; background: var(--raised); border: 1px solid var(--line);
+    border-radius: var(--radius); overflow: hidden;
+  }
+  .meter .fill { position: absolute; left: 0; right: 0; bottom: 0; background: linear-gradient(0deg, var(--accent), #7cc4ff); transition: height .25s; }
+  .meter.muted .fill { background: #4a525e; }
+  .meter .val { position: absolute; inset: 0; display: grid; place-items: center; font-size: 28px; font-weight: 600; text-shadow: 0 1px 6px rgba(0,0,0,.6); }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .vol { font-size: 22px; padding: 10px; }
+  .mute.on { background: var(--off); border-color: var(--off); }
+
+  .power { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 18px; }
+  .pwr { padding: 18px; font-weight: 600; font-size: 16px; }
+  .pwr.on.lit { background: var(--on); border-color: var(--on); color: #06210f; }
+  .pwr.off.lit { background: #3a2022; border-color: var(--off); }
+
+  .status {
+    margin-top: 16px; padding: 12px 14px; border-radius: 10px; background: var(--raised);
+    border: 1px solid var(--line); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  }
+  .status .busy { color: var(--warn); }
+  .bar { height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; margin-top: 8px; display: none; }
+  .bar.show { display: block; }
+  .bar div { height: 100%; width: 40%; background: var(--warn); animation: slide 1.2s infinite ease-in-out; }
+  @keyframes slide { 0% { transform: translateX(-100%); } 100% { transform: translateX(250%); } }
+
+  details { margin-top: 18px; }
+  summary { cursor: pointer; color: var(--muted); font-size: 13px; }
+  .tech { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 12px; }
+  @media (max-width: 720px) { .tech { grid-template-columns: 1fr; } }
+  .box { background: var(--raised); border: 1px solid var(--line); border-radius: 10px; padding: 12px; max-height: 280px; overflow: auto; }
+  table { width: 100%; border-collapse: collapse; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  td { padding: 2px 6px; border-bottom: 1px solid var(--line); }
+  td.t { color: var(--muted); width: 1%; white-space: nowrap; }
+  .true { color: var(--on); } .false { color: var(--muted); }
+  .err { color: var(--off); }
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="bezel">
+    <header>
+      <div>
+        <h1 id="room">Conference Room</h1>
+        <div class="sub"><span id="clock"></span> · Projector: <span id="pj">–</span> · Lamp <span id="lamp">–</span> h</div>
+      </div>
+      <div class="leds">
+        <div class="led" id="led-projector"><i></i>Projector</div>
+        <div class="led" id="led-switcher"><i></i>Switcher</div>
+        <div class="led" id="led-dsp"><i></i>DSP</div>
+      </div>
+    </header>
+
+    <div class="grid">
+      <section>
+        <p class="label">Sources</p>
+        <div class="sources" id="sources"></div>
+        <div class="power">
+          <button class="pwr on" id="btn-on">System On</button>
+          <button class="pwr off" id="btn-off">System Off</button>
+        </div>
+      </section>
+
+      <section class="audio">
+        <p class="label">Program audio</p>
+        <div class="meter" id="meter"><div class="fill" id="fill"></div><div class="val" id="vol">–</div></div>
+        <div class="row2">
+          <button class="vol" id="btn-down" aria-label="Volume down">−</button>
+          <button class="vol" id="btn-up" aria-label="Volume up">+</button>
+        </div>
+        <button class="mute" id="btn-mute">Mute</button>
+      </section>
+    </div>
+
+    <div class="status">
+      <div><span id="status">Connecting…</span></div>
+      <div class="sub">System: <b id="sys">–</b></div>
+    </div>
+    <div class="bar" id="bar"><div></div></div>
+
+    <details>
+      <summary>Tech page: joins and event log</summary>
+      <div class="tech">
+        <div class="box"><table id="joins"></table></div>
+        <div class="box"><table id="events"></table></div>
+      </div>
+    </details>
+  </div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let state = null;
+
+async function act(action, value) {
+  try {
+    await fetch("/api/action", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action, value }),
+    });
+  } catch (e) { /* the next poll will show the controller as unreachable */ }
+  refresh();
+}
+
+function renderSources(s) {
+  const wrap = $("sources");
+  if (wrap.childElementCount !== s.sources.length) {
+    wrap.innerHTML = "";
+    for (const src of s.sources) {
+      const b = document.createElement("button");
+      b.className = "src"; b.dataset.input = src.input;
+      b.innerHTML = `<b></b><span></span>`;
+      b.querySelector("b").textContent = src.name;
+      b.onclick = () => act("source", src.input);
+      wrap.appendChild(b);
+    }
+  }
+  for (const b of wrap.children) {
+    const active = s.system === "on" && Number(b.dataset.input) === s.source;
+    b.classList.toggle("active", active);
+    b.querySelector("span").textContent = active ? "On screen" : `Input ${b.dataset.input}`;
+    b.disabled = s.busy;
+  }
+}
+
+function render(s) {
+  $("room").textContent = s.room_name;
+  $("pj").textContent = s.projector_power;
+  $("lamp").textContent = s.lamp_hours ?? "–";
+  $("status").textContent = s.status;
+  $("status").className = s.busy ? "busy" : "";
+  $("sys").textContent = s.system;
+  $("bar").classList.toggle("show", s.busy);
+  for (const d of ["projector", "switcher", "dsp"]) $("led-" + d).classList.toggle("up", !!s.online[d]);
+
+  renderSources(s);
+  $("fill").style.height = s.volume + "%";
+  $("vol").textContent = s.muted ? "Muted" : s.volume + "%";
+  $("meter").classList.toggle("muted", s.muted);
+  $("btn-mute").classList.toggle("on", s.muted);
+  $("btn-mute").textContent = s.muted ? "Unmute" : "Mute";
+  $("btn-on").classList.toggle("lit", s.system === "on");
+  $("btn-off").classList.toggle("lit", s.system === "off");
+  $("btn-on").disabled = $("btn-off").disabled = s.busy;
+
+  const rows = [];
+  for (const [kind, map] of Object.entries(s.joins)) {
+    for (const [num, val] of Object.entries(map)) {
+      const cls = typeof val === "boolean" ? String(val) : "";
+      rows.push(`<tr><td class="t">${kind[0].toUpperCase()}${num}</td><td class="${cls}"></td></tr>`);
+    }
+  }
+  $("joins").innerHTML = rows.join("");
+  let i = 0;
+  for (const map of Object.values(s.joins)) for (const v of Object.values(map)) $("joins").rows[i++].cells[1].textContent = String(v);
+
+  $("events").innerHTML = "";
+  for (const e of s.events) {
+    const tr = $("events").insertRow();
+    tr.insertCell().textContent = e.t; tr.cells[0].className = "t";
+    const c = tr.insertCell(); c.textContent = e.msg; if (e.level === "error") c.className = "err";
+  }
+}
+
+async function refresh() {
+  try {
+    const r = await fetch("/api/state");
+    state = await r.json();
+    render(state);
+  } catch (e) {
+    $("status").textContent = "Controller unreachable";
+    for (const d of ["projector", "switcher", "dsp"]) $("led-" + d).classList.remove("up");
+  }
+}
+
+$("btn-on").onclick = () => act("system_on");
+$("btn-off").onclick = () => act("system_off");
+$("btn-up").onclick = () => act("vol_up");
+$("btn-down").onclick = () => act("vol_down");
+$("btn-mute").onclick = () => act("mute");
+
+setInterval(() => { $("clock").textContent = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }); }, 1000);
+setInterval(refresh, 1000);
+refresh();
+</script>
+</body>
+</html>

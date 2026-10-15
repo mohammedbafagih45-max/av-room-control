@@ -1,0 +1,25 @@
+{
+  "room_name": "Conference Room 2B",
+  "default_source": 1,
+  "default_volume": 40,
+  "poll_interval": 2.0,
+  "warmup_timeout": 60,
+
+  "devices": {
+    "projector": { "host": "127.0.0.1", "port": 4352, "password": null },
+    "switcher":  { "host": "127.0.0.1", "port": 5000 },
+    "dsp":       { "host": "127.0.0.1", "port": 5001 }
+  },
+
+  "sources": [
+    { "input": 1, "name": "Laptop (HDMI)" },
+    { "input": 2, "name": "Room PC" },
+    { "input": 3, "name": "Wireless Presenter" },
+    { "input": 4, "name": "Document Camera" }
+  ],
+
+  "simulator": {
+    "projector_warmup_seconds": 6,
+    "projector_cooldown_seconds": 6
+  }
+}
