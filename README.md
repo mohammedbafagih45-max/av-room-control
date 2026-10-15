@@ -33,7 +33,7 @@ flowchart LR
 Requires Python 3.10+, with no packages to install.
 
 ```bash
-git clone https://github.com/<you>/av-room-control.git
+git clone https://github.com/mohammedbafagih45-max/av-room-control.git
 cd av-room-control
 python run.py
 ```
